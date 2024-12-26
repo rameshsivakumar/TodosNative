@@ -2,9 +2,7 @@ package com.sample.todosnative.repository
 
 import android.util.Log
 import com.sample.todosnative.db.TodoDao
-import com.sample.todosnative.model.TodoItem
 import com.sample.todosnative.network.ApiService
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import retrofit2.HttpException
 import java.io.IOException
