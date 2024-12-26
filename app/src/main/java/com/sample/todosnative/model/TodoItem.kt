@@ -1,7 +1,12 @@
 package com.sample.todosnative.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "todos")
 data class TodoItem(
-    val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int,
+    val userId: Int,
     val title: String,
-    val isDone: Boolean
+    val completed: Boolean
 )

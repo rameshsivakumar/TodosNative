@@ -1,7 +1,5 @@
 package com.sample.todosnative
 
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.Composable
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,33 +7,32 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sample.todosnative.db.TodoDatabase
 import com.sample.todosnative.model.TodoItem
+import com.sample.todosnative.network.ApiService
 import com.sample.todosnative.repository.TodoRepository
 import com.sample.todosnative.viewmodel.TodoViewModel
 import com.sample.todosnative.viewmodel.TodoViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val apiService = ApiService.create()
+    private val todoDatabase by lazy { TodoDatabase.getDatabase(this) }
+    private val todoRepository by lazy { TodoRepository(apiService, todoDatabase.todoDao()) }
     private val todoViewModel: TodoViewModel by viewModels {
-        TodoViewModelFactory(TodoRepository())
+        TodoViewModelFactory(todoRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,62 +43,41 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoApp(todoViewModel: TodoViewModel = viewModel()) {
-    val todos by todoViewModel.todos.observeAsState(emptyList())
-    var newTodoText by remember { mutableStateOf("") }
+    val todos by todoViewModel.todos.collectAsState()
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Text(
-            text = "Todo List",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(16.dp)
-        )
-        TextField(
-            value = newTodoText,
-            onValueChange = { newTodoText = it },
-            label = { Text("New Todo") },
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = {
-                todoViewModel.addTodo(newTodoText)
-                newTodoText = ""
-            })
-        )
-        LazyColumn {
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("Todo List") })
+        }
+    ) { _ ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp)
+        ) {
             items(todos) { todo: TodoItem ->
-                TodoItemView(todo, todoViewModel)
+                TodoItemView(todo)
             }
         }
     }
 }
 
 @Composable
-fun TodoItemView(todo: TodoItem, todoViewModel: TodoViewModel) {
+fun TodoItemView(todo: TodoItem) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
-            checked = todo.isDone,
-            onCheckedChange = { todoViewModel.toggleTodoDone(todo.id) }
+            checked = todo.completed,
+            onCheckedChange = null // Read-only
         )
         Text(
             text = todo.title,
-            modifier = Modifier.weight(1f).padding(start = 8.dp),
-            style = if (todo.isDone) {
-                MaterialTheme.typography.bodyLarge.copy(textDecoration = TextDecoration.LineThrough)
-            } else {
-                MaterialTheme.typography.bodyLarge
-            }
+            modifier = Modifier.weight(1f).padding(start = 8.dp)
         )
-        IconButton(onClick = { todoViewModel.removeTodoById(todo.id) }) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete")
-        }
     }
 }
 
