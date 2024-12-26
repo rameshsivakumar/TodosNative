@@ -1,30 +1,30 @@
 package com.sample.todosnative.repository
 
+import android.util.Log
+import com.sample.todosnative.db.TodoDao
 import com.sample.todosnative.model.TodoItem
+import com.sample.todosnative.network.ApiService
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import retrofit2.HttpException
+import java.io.IOException
 
-class TodoRepository {
-    private val todos = mutableListOf<TodoItem>()
-    private var nextId = 0
+class TodoRepository (private val apiService: ApiService, private val todoDao: TodoDao) {
 
-    fun getTodos(): List<TodoItem> {
-        return todos
-    }
-
-    fun addTodo(title: String) {
-        if (title.isNotBlank()) {
-            todos.add(TodoItem(nextId++, title, false))
-        }
-    }
-
-    fun removeTodoById(id: Int) {
-        todos.removeAll { it.id == id }
-    }
-
-    fun toggleTodoDone(id: Int) {
-        val index = todos.indexOfFirst { it.id == id }
-        if (index != -1) {
-            val todo = todos[index]
-            todos[index] = todo.copy(isDone = !todo.isDone)
+    fun fetchTodos() = flow {
+        try {
+            val fetchedTodos = apiService.getTodos()
+            todoDao.insertAll(fetchedTodos)
+            Log.i("TodoRepository","inserted into DB")
+            emit(fetchedTodos)
+        } catch (e: IOException) {
+            // Network error, fallback to local database
+            Log.e("TodoRepository","IOException")
+            emit(todoDao.getTodos())
+        } catch (e: HttpException) {
+            // HTTP error, fallback to local database
+            Log.e("TodoRepository","HttpException")
+            emit(todoDao.getTodos())
         }
     }
 }
