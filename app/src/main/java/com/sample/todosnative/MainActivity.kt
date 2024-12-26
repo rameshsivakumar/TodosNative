@@ -18,22 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sample.todosnative.db.TodoDatabase
 import com.sample.todosnative.model.TodoItem
-import com.sample.todosnative.network.ApiService
-import com.sample.todosnative.repository.TodoRepository
 import com.sample.todosnative.viewmodel.TodoViewModel
-import com.sample.todosnative.viewmodel.TodoViewModelFactory
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val apiService = ApiService.create()
-    private val todoDatabase by lazy { TodoDatabase.getDatabase(this) }
-    private val todoRepository by lazy { TodoRepository(apiService, todoDatabase.todoDao()) }
-    private val todoViewModel: TodoViewModel by viewModels {
-        TodoViewModelFactory(todoRepository)
-    }
+    private val todoViewModel: TodoViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
