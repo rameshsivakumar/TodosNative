@@ -52,10 +52,10 @@ fun TodoApp(todoViewModel: TodoViewModel = viewModel(), onTodoClick: (TodoItemEn
         topBar = {
             TopAppBar(title = { Text("Todo List") })
         }
-    ) { _ ->
+    ) { paddingValues ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp)
+            contentPadding = paddingValues
         ) {
             items(todos) { todo: TodoItemEntity ->
                 TodoItemView(todo, onClick = onTodoClick)
